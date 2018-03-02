@@ -8,12 +8,12 @@ import java.util.Properties;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 
-import io.reactivex.Flowable;
+import io.reactivex.Observable;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.kafka.client.producer.KafkaProducer;
-import io.vertx.reactivex.FlowableHelper;
+import io.vertx.reactivex.ObservableHelper;
 
 /**
  * @author soleil
@@ -47,8 +47,20 @@ public class HttpKafkaVerticle extends AbstractVerticle {
 				req.response().setStatusCode(413).end();
 			}else {
 				req.uploadHandler(upload -> {
-					Flowable<Buffer> observalbe = FlowableHelper.toFlowable(upload);
-					observalbe.forEach(data -> System.out.println("Read data: " + data.toString("UTF-8")));
+//					Flowable<Buffer> observalbe = FlowableHelper.toFlowable(upload);
+//					observalbe.forEach(data -> System.out.println("Read data: " + data.toString("UTF-8")));
+					
+//					Observable<Buffer> observable = ObservableHelper.toObservable(upload);
+//					observable.subscribe(data -> System.out.println("Read data: " + data.toString("UTF-8")));
+					
+					Buffer totalBuffer = Buffer.buffer();
+					upload.handler(buf -> {
+						totalBuffer.appendBuffer(buf);
+					}).endHandler(v ->{
+						Observable<String> observable = Observable.fromArray(totalBuffer.toString().split("\n"));
+						observable.subscribe(System.out::println);
+						System.out.println("i am returned");
+					});
 				}).endHandler(v -> {
 					req.response().putHeader("context-type", "text/plain").end("Hello from vert.x! Testing hot redeployment.");
 				});
