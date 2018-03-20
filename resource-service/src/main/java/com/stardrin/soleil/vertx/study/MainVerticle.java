@@ -5,6 +5,7 @@ import com.stardrin.soleil.vertx.study.service.HelloServiceImpl;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.servicediscovery.Record;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.types.EventBusService;
@@ -30,7 +31,7 @@ public class MainVerticle extends AbstractVerticle {
 		HelloService helloService = builder.build(HelloService.class);
 
 		Router router = Router.router(vertx);
-		router.get("/").handler(rc -> {
+		router.get("/api/hello").handler(rc -> {
 			helloService.hello(r -> {
 				if (r.succeeded())
 					rc.response().end(r.result().toString());
@@ -38,6 +39,8 @@ public class MainVerticle extends AbstractVerticle {
 					rc.response().setStatusCode(500).end();
 			});
 		});
+		router.get("/app/*").handler(StaticHandler.create().setCachingEnabled(false));
+		router.get("/").handler(rc -> rc.reroute("/app/index.html"));
 
 		vertx.createHttpServer().requestHandler(router::accept).listen(8080);
 	}
